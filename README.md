@@ -16,9 +16,9 @@ the aim of offering a comparison of the trade offs of the modern techniques in
 terms of their accuracy and simplicity in terms of ease of implementation and maintenance.
 
 
-  References:
-  [1] http://norvig.com/spell-correct.html
-  [2] Kukich, Techniques for Automatically Correcting Words in Text; ACM Comput.
+###  References ###
+  1. http://norvig.com/spell-correct.html
+  2. Kukich, Techniques for Automatically Correcting Words in Text; ACM Comput.
       Surv. 1992 (http://www.devl.fr/docs/these/bibli/Kukich1992Techniqueforautomatically.pdf)
-  [3] http://pubs.opengroup.org/onlinepubs/007908799/xcu/spell.html
-  [4] Cavnar and Trenkle, N-Gram-Based Text Categorization; In Proceedings of SDAIR-94
+  3. http://pubs.opengroup.org/onlinepubs/007908799/xcu/spell.html
+  4. Cavnar and Trenkle, N-Gram-Based Text Categorization; In Proceedings of SDAIR-94
