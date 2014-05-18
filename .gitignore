@@ -1,3 +1,5 @@
 *.swp
 *.out
 *.o
+spell_list_test
+core
