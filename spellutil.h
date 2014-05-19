@@ -1,5 +1,5 @@
-#ifndef LIBSPELL_H
-#define LIBSPELL_H
+#ifndef SPELLUTIL_H
+#define SPELLUTIL_H
 
 typedef struct spell_list_node {
     struct spell_list_node *next;
