@@ -115,6 +115,34 @@ test_list_remove_tail()
 
 }
 
+static void
+test_list_remove_middle()
+{
+    spell_list_node *to_be_deleted;
+    spell_list_node *prev;
+    spell_list_node *next;
+    spell_list_node *n = setup();
+    char *a = "a";
+    char *b = "b";
+    char *c = "c";
+    char *d = "d";
+    spell_list_add(&n, a);
+    spell_list_add(&n, b);
+    spell_list_add(&n, c);
+    spell_list_add(&n, d);
+    prev = n;
+    to_be_deleted = prev->next;
+    while ((char *) to_be_deleted->data != c) {
+        prev = to_be_deleted;
+        to_be_deleted = to_be_deleted->next;
+        next = to_be_deleted->next;
+    }
+    spell_list_remove(&n, to_be_deleted, NULL);
+    assert(prev->next == next);
+    spell_list_free(&n, NULL);
+    printf("[PASSED] test_list_remove_middle\n");
+}
+
 
 int main
 (int argc, char **argv)
@@ -126,4 +154,5 @@ int main
     test_list_get_tail();
     test_list_remove_head();
     test_list_remove_tail();
+    test_list_remove_middle();
 }
