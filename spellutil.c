@@ -69,3 +69,53 @@ spell_list_free(spell_list_node **phead, void (*free_data) (void *))
     }
     *phead = NULL;
 }
+
+void
+spell_list_remove(spell_list_node **phead, spell_list_node *node, void (*pfree) (void *))
+{
+    if (!phead || !node) {
+        return;
+    }
+
+    spell_list_node *head = *phead;
+    spell_list_node *iter = head;
+    spell_list_node *temp_node;
+
+    /*
+     * if the node to be deleted is the head of the linked list
+     */
+    if (node == head) {
+        *phead = head->next;
+        if (pfree) {
+            pfree(head->data);
+        }
+        free(head);
+        return;
+    }
+
+    while (iter) {
+        if (iter->next == node) {
+            iter->next = iter->next->next;
+            if (pfree) {
+                pfree(node->data);
+            }
+            free(node);
+            return;
+        }
+        iter = iter->next;
+    }
+}
+
+spell_list_node *
+spell_list_get_tail(spell_list_node *head)
+{
+    spell_list_node *i = head;
+    if (i == NULL) {
+        return NULL;
+    }
+
+    while (i->next) {
+        i = i->next;
+    }
+    return i;
+}

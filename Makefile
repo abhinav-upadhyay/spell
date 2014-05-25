@@ -1,5 +1,5 @@
 CC=clang
-CFLAGS=-I ./*.h -g
+CFLAGS=-I ./ -g
 all:	spell_list_test
 
 spell_list_test: spell_list_test.o spellutil.o
