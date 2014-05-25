@@ -3,25 +3,38 @@
 
 #include <sys/types.h>
 
+#define SPELL_HASHTABLE_INIT_SIZE 32
+
 typedef struct spell_list_node {
     struct spell_list_node *next;
     void *data;
 } spell_list_node;
 
-typedef struct spell_hashtable {
-    char *key;
-    spell_list_node *val;
+typedef struct spell_hashtable_entry {
+    spell_list_node *val_list;
+} spell_hashtable_entry;
+
+typedef struct spell_hashtable_t {
+    spell_hashtable_entry **array;
+    size_t size;
+    size_t nfree;
 } spell_hashtable;
+
+typedef struct keyval {
+    char *key;
+    void *val;
+} keyval;
 
 spell_list_node *spell_list_init(void *);
 int spell_list_add(spell_list_node **, void *);
 void spell_list_remove(spell_list_node **, spell_list_node *, void (*) (void *));
 void spell_list_free(spell_list_node **, void (*) (void *));
 spell_list_node *spell_list_get_tail(spell_list_node *);
+spell_list_node *spell_list_get(spell_list_node *, void *, int (*) (const void *, const void*));
 spell_hashtable *spell_hashtable_init(size_t);
 void spell_hashtable_add(spell_hashtable *, char *, void *);
-void spell_hashtable_remove(spell_hashtable *, char *);
-void spell_hashtable_get(spell_hashtable *, char *);
+void spell_hashtable_remove(spell_hashtable *, char *, void (*)(void *));
+void *spell_hashtable_get(spell_hashtable *, char *);
 void spell_hashtable_free(spell_hashtable *, void (*) (void *));
 
 #endif
