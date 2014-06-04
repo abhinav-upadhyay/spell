@@ -10,12 +10,9 @@ typedef struct spell_list_node {
     void *data;
 } spell_list_node;
 
-typedef struct spell_hashtable_entry {
-    spell_list_node *val_list;
-} spell_hashtable_entry;
 
 typedef struct spell_hashtable_t {
-    spell_hashtable_entry **array;
+    spell_list_node **array;
     size_t size;
     size_t nfree;
 } spell_hashtable;

@@ -18,4 +18,4 @@ spellutil.o: spellutil.c spellutil.h
 	${CC} ${CFLAGS} -c spellutil.c
 
 clean:
-	rm -rf *.o spell_list_test *.a *.so
+	rm -rf *.o spell_list_test *.a *.so core

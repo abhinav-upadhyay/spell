@@ -156,45 +156,44 @@ compute_hash(unsigned char *str, size_t bound)
 spell_hashtable *
 spell_hashtable_init(size_t n)
 {
-    size_t init_size = n > SPELL_HASHTABLE_INIT_SIZE? n + (n % 2): SPELL_HASHTABLE_INIT_SIZE;
     if (n <= 0) {
         return NULL;
     }
+
+    size_t init_size = n > SPELL_HASHTABLE_INIT_SIZE? n + (n % 2): SPELL_HASHTABLE_INIT_SIZE;
 
     spell_hashtable *hashtable = malloc(sizeof(spell_hashtable));
     if (hashtable == NULL) {
         return NULL;
     }
 
-
-    hashtable->array = malloc(init_size * sizeof(spell_hashtable_entry));
+    hashtable->array = malloc(init_size * sizeof(spell_list_node *));
     if (hashtable->array == NULL) {
         free(hashtable);
         return NULL;
     }
 
-    memset(hashtable->array, init_size, 0);
+    memset(hashtable->array, 0, init_size * sizeof(spell_list_node *));
     hashtable->size = init_size;
     hashtable->nfree = init_size;
     return hashtable;
 }
 
-static spell_hashtable_entry *
-gen_hash_entry(char *key, void *val)
+static keyval*
+generate_new_keyval(char *key, void *val)
 {
-    spell_hashtable_entry *entry = malloc(sizeof(spell_hashtable_entry));
-    if (entry == NULL) {
+    keyval *kv = malloc(sizeof(keyval));
+    if (kv == NULL) {
         return NULL;
     }
+    kv->key = key;
+    kv->val = val;
+    return kv;
+}
 
-    spell_list_node *head = spell_list_init(val);
-    if (head == NULL) {
-        free(entry);
-        return NULL;
-    }
-
-    entry->val_list = head;
-    return entry;
+static void
+resize_table(spell_hashtable *table)
+{
 }
 
 void
@@ -204,15 +203,20 @@ spell_hashtable_add(spell_hashtable *table, char *key, void *val)
         return;
     }
 
+    if (table->nfree == 0) {
+        resize_table(table);
+    }
+
     unsigned long index = compute_hash((unsigned char *) key, table->size);
-    spell_hashtable_entry *new_entry = gen_hash_entry(key, val);
-    if (new_entry == NULL) {
+    keyval *kv = generate_new_keyval(key, val);
+    if (kv == NULL) {
         return;
     }
+
     if (table->array[index] == NULL) {
-        table->array[index] = new_entry;
+        table->array[index] = spell_list_init(kv);
     } else {
-         spell_list_add(&table->array[index]->val_list, new_entry);
+         spell_list_add(&table->array[index], kv);
     }
     table->nfree--;
 }
@@ -231,7 +235,6 @@ hash_compare_data(const void *d1, const void *d2)
 void *
 spell_hashtable_get(spell_hashtable *table, char *key)
 {
-    spell_list_node *val_list;
     spell_list_node *n;
     keyval *dummy_kv;
     keyval *val;
@@ -240,14 +243,13 @@ spell_hashtable_get(spell_hashtable *table, char *key)
         return NULL;
     }
 
-    spell_hashtable_entry *entry = table->array[index];
-    val_list = entry->val_list;
+    spell_list_node *entry = table->array[index];
     dummy_kv = malloc(sizeof(keyval));
     if (dummy_kv == NULL) {
         return NULL;
     }
     dummy_kv->key = key;
-    n = spell_list_get(val_list, dummy_kv, hash_compare_data);  
+    n = spell_list_get(entry, dummy_kv, hash_compare_data);  
     if (n == NULL) {
         free(dummy_kv);
         return NULL;
@@ -259,7 +261,6 @@ spell_hashtable_get(spell_hashtable *table, char *key)
     }
     free(dummy_kv);
     return NULL;
-
 }
 
 static void
@@ -272,7 +273,6 @@ hash_free(void *keyval_pair)
 void
 spell_hashtable_remove(spell_hashtable *table, char *key, void (*pfree) (void *))
 {
-    spell_list_node *val_list;
     spell_list_node *n;
     keyval *dummy_kv;
     keyval *val;
@@ -281,22 +281,21 @@ spell_hashtable_remove(spell_hashtable *table, char *key, void (*pfree) (void *)
     if (table->array[index] == NULL) {
         return;
     }
-    spell_hashtable_entry *entry = table->array[index];
-    val_list = entry->val_list;
+    spell_list_node *entry = table->array[index];
     dummy_kv = malloc(sizeof(keyval));
     if (dummy_kv == NULL) {
         return;
     }
 
     dummy_kv->key = key;
-    n = spell_list_get(val_list, dummy_kv, hash_compare_data);
+    n = spell_list_get(entry, dummy_kv, hash_compare_data);
     if (n == NULL) {
         free(dummy_kv);
         return;
     }
     val = n->data;
     pfree(val);
-    spell_list_remove(&val_list, n, hash_free);
+    spell_list_remove(&entry, n, hash_free);
     free(dummy_kv);
 }
 

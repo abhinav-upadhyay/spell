@@ -22,8 +22,8 @@ test_spell_hash_add_one()
     char *val1 = "foo bar";
     spell_hashtable *table = spell_hashtable_init(1);
     spell_hashtable_add(table, key1, val1);
-    char *key2 = spell_hashtable_get(table, key1);
-    assert(strcmp(key1, key2) == 0);
+    char *val2 = spell_hashtable_get(table, key1);
+    assert(strcmp(val1, val2) == 0);
     spell_hashtable_free(table, NULL);
     printf("[PASSED] test_spell_hash_add_one\n");
 
