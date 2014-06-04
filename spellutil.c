@@ -186,7 +186,7 @@ generate_new_keyval(char *key, void *val)
     if (kv == NULL) {
         return NULL;
     }
-    kv->key = key;
+    kv->key = strdup(key);
     kv->val = val;
     return kv;
 }
@@ -226,7 +226,7 @@ hash_compare_data(const void *d1, const void *d2)
 {
     const keyval *kv1 = (const keyval *)d1;
     const keyval *kv2 = (const keyval *)d2;
-    if (kv1->key == kv2->key) {
+    if (strcmp(kv1->key, kv2->key) == 0) {
         return 0;
     }
     return 1;
@@ -302,7 +302,25 @@ spell_hashtable_remove(spell_hashtable *table, char *key, void (*pfree) (void *)
 void
 spell_hashtable_free(spell_hashtable *table, void (*pfree) (void *))
 {
-
+    if (table == NULL) {
+        return;
+    }
+    int i;
+    int nentries = table->size - table->nfree;
+    for (i = 0; i <= nentries; i++) {
+        spell_list_node *entry = table->array[i];
+        if (entry == NULL) {
+            continue;
+        }
+        keyval *kv = (keyval *) entry->data;
+        if (pfree) {
+            pfree(kv->val);
+        }
+        free(kv->key);
+        spell_list_free(&entry, free);
+    }
+    free(table->array);
+    free(table);
 }
     
 
