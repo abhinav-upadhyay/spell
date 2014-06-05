@@ -29,9 +29,31 @@ test_spell_hash_add_one()
 
 }
 
+static void
+test_spell_hash_add_multi()
+{
+    char *key1 = "hello world";
+    char *val1 = "foo bar";
+    char *key2 = "a";
+    char *val2 = "b";
+    char *key3 = "c";
+    char *val3 = "d";
+    spell_hashtable *table = spell_hashtable_init(1);
+    spell_hashtable_add(table, key1, val1);
+    spell_hashtable_add(table, key2, val2);
+    spell_hashtable_add(table, key3, val3);
+    assert(strcmp(val1, spell_hashtable_get(table, key1)) == 0);
+    assert(strcmp(val2, spell_hashtable_get(table, key2)) == 0);
+    assert(strcmp(val3, spell_hashtable_get(table, key3)) == 0);
+    spell_hashtable_free(table, NULL);
+    printf("[PASSED] test_spell_hash_add_multi\n");
+
+}
+
 int
 main(int argc, char **argv)
 {
     test_spell_hash_init();
     test_spell_hash_add_one();
+    test_spell_hash_add_multi();
 }

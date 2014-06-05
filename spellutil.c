@@ -194,6 +194,17 @@ generate_new_keyval(char *key, void *val)
 static void
 resize_table(spell_hashtable *table)
 {
+    int i;
+    spell_list_node **ptr = realloc(table->array, 2 * table->size * sizeof(spell_list_node *));
+    if (ptr == NULL) {
+        return;
+    }
+    table->array =  ptr;
+    for (i = table->size; i < 2 * table->size; i++) {
+        table->array[i] = NULL;
+    }
+    table->nfree = table->size;
+    table->size *= 2;
 }
 
 void
@@ -306,8 +317,7 @@ spell_hashtable_free(spell_hashtable *table, void (*pfree) (void *))
         return;
     }
     int i;
-    int nentries = table->size - table->nfree;
-    for (i = 0; i <= nentries; i++) {
+    for (i = 0; i < table->size ; i++) {
         spell_list_node *entry = table->array[i];
         if (entry == NULL) {
             continue;
@@ -322,6 +332,3 @@ spell_hashtable_free(spell_hashtable *table, void (*pfree) (void *))
     free(table->array);
     free(table);
 }
-    
-
-
