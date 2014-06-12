@@ -310,6 +310,40 @@ spell_hashtable_remove(spell_hashtable *table, char *key, void (*pfree) (void *)
     free(dummy_kv);
 }
 
+static void
+free_keyval(void *d)
+{
+    keyval *kv = (keyval *) d;
+    free(kv->key);
+}
+
+static void
+free_entry_list(spell_list_node **phead, void(*valfree) (void *))
+{
+
+    spell_list_node *n;
+    spell_list_node *head;
+    spell_list_node *next;
+
+    if (!phead || !*phead) {
+        return;
+    }
+
+    head = *phead;
+    n = head;
+    while (n) {
+        next = n->next;
+        keyval *kv = (keyval *) n->data;
+        free(kv->key);
+        if (valfree)
+            valfree(kv->val);
+        free(kv);
+        free(n);
+        n = next;
+    }
+    *phead = NULL;
+}
+
 void
 spell_hashtable_free(spell_hashtable *table, void (*pfree) (void *))
 {
@@ -322,12 +356,7 @@ spell_hashtable_free(spell_hashtable *table, void (*pfree) (void *))
         if (entry == NULL) {
             continue;
         }
-        keyval *kv = (keyval *) entry->data;
-        if (pfree) {
-            pfree(kv->val);
-        }
-        free(kv->key);
-        spell_list_free(&entry, free);
+        free_entry_list(&entry, pfree);
     }
     free(table->array);
     free(table);
