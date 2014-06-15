@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <stdbool.h>
 
-#define SPELL_HASHTABLE_INIT_SIZE 3
+#define SPELL_HASHTABLE_INIT_SIZE 32
 
 typedef struct spell_list_node {
     struct spell_list_node *next;

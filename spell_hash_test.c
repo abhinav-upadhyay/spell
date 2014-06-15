@@ -115,7 +115,7 @@ static void
 test_spell_hash_get_keys()
 {
     int i;
-    const int SIZE = 3;
+    const int SIZE = 65;
     int arr[65] = {0};
     spell_hashtable *table = generate_hashtable(SIZE);
     spell_list_node *keylist = spell_hashtable_get_keys(table, false);
@@ -123,11 +123,6 @@ test_spell_hash_get_keys()
     spell_list_node *thead = keylist;
     while (thead) {
         char *key = (char *) thead->data;
-        fprintf(stderr, "%s\n", key);
-//        if (!key) {
-  //          thead = thead->next;
-    //        continue;
-      //  }
         int intkey = atoi(key);
         assert(arr[intkey] == 0);
         arr[intkey] = intkey;
