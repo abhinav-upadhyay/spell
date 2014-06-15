@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,7 +72,7 @@ itos(int x)
     int n = x;
     s[ndigits] = 0;
     for (i = ndigits - 1; i >= 0; i--) {
-        s[i] = n % 10;
+        s[i] = n % 10 + 48;
         n /= 10;
     }
     return s;
@@ -87,15 +88,60 @@ test_spell_hash_resize()
         spell_hashtable_add(table, k, &i);
         free(k);
     }
-    assert(table->size == 32);
+    assert(table->size == SPELL_HASHTABLE_INIT_SIZE);
     assert(table->nfree == 0);
     spell_hashtable_add(table, "33", "33");
-    assert(table->size == 64);
-    assert(table->nfree == 31);
+    assert(table->size == 2 * SPELL_HASHTABLE_INIT_SIZE);
+    assert(table->nfree == SPELL_HASHTABLE_INIT_SIZE - 1);
     spell_hashtable_free(table, NULL);
     printf("[PASSED] test_spell_hash_resize\n");
 
 }
+
+static spell_hashtable *
+generate_hashtable(int limit)
+{
+    int i;
+    spell_hashtable *table = spell_hashtable_init(limit);
+    for (i = 0; i < limit; i++) {
+        char *k = itos(i);
+        spell_hashtable_add(table, k, &i);
+        free(k);
+    }
+    return table;
+}
+
+static void
+test_spell_hash_get_keys()
+{
+    int i;
+    const int SIZE = 3;
+    int arr[65] = {0};
+    spell_hashtable *table = generate_hashtable(SIZE);
+    spell_list_node *keylist = spell_hashtable_get_keys(table, false);
+    assert(keylist != NULL);
+    spell_list_node *thead = keylist;
+    while (thead) {
+        char *key = (char *) thead->data;
+        fprintf(stderr, "%s\n", key);
+//        if (!key) {
+  //          thead = thead->next;
+    //        continue;
+      //  }
+        int intkey = atoi(key);
+        assert(arr[intkey] == 0);
+        arr[intkey] = intkey;
+        thead = thead->next;
+    }
+    for (i = 0; i < SIZE; i++) {
+        assert(arr[i] == i);
+    }
+    spell_hashtable_free(table, NULL);
+    spell_list_free(&keylist, NULL);
+    printf("[PASSED] test_spell_hash_get_keys\n");
+}
+
+
 
 int
 main(int argc, char **argv)
@@ -104,4 +150,5 @@ main(int argc, char **argv)
     test_spell_hash_add_one();
     test_spell_hash_add_multi();
     test_spell_hash_resize();
+    test_spell_hash_get_keys();
 }

@@ -1,6 +1,9 @@
+#include <assert.h>
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "spellutil.h"
@@ -19,31 +22,21 @@ spell_list_init(void *data)
 }
 
 int
-spell_list_add(spell_list_node **phead, void *data)
+spell_list_add_head(spell_list_node **phead, void *data)
 {
     spell_list_node *tail;
     spell_list_node *head;
     spell_list_node *new_node;
 
-    if (*phead == NULL) {
-        return -1;
-    }
-
     head = *phead;
-    tail = head;
-
-    while (tail->next) {
-        tail = tail->next;
-    }
-
     new_node = malloc(sizeof(spell_list_node));
     if (new_node == NULL) {
         return -1;
     }
 
-    new_node->next = NULL;
+    new_node->next = head;
     new_node->data = data;
-    tail->next = new_node;
+    *phead = new_node;
     return 0;
 }
 
@@ -227,7 +220,7 @@ spell_hashtable_add(spell_hashtable *table, char *key, void *val)
     if (table->array[index] == NULL) {
         table->array[index] = spell_list_init(kv);
     } else {
-         spell_list_add(&table->array[index], kv);
+         spell_list_add_head(&table->array[index], kv);
     }
     table->nfree--;
 }
@@ -360,4 +353,155 @@ spell_hashtable_free(spell_hashtable *table, void (*pfree) (void *))
     }
     free(table->array);
     free(table);
+}
+
+/*
+ * Returns a list of all the keys stored in the table.
+ * The caller needs to make sure not to free the table till
+ * the table is being accessed as all the pointers in the key are
+ * same as the ones stored in the table and will be invalidated
+ * as soon as the table is freed. When freeing the list pass NULL
+ * as the 2nd parameter to the spell_list_free function.
+ */
+spell_list_node *
+spell_hashtable_get_keys(spell_hashtable *table, bool deepcopy)
+{
+    if (table == NULL) {
+        return NULL;
+    }
+
+    int i;
+    spell_list_node *keylist_head = NULL;
+    for (i = 0; i < table->size ; i++) {
+        spell_list_node *entry = table->array[i];
+        if (entry == NULL) {
+            continue;
+        }
+        while (entry) {
+            assert(entry->data);
+            keyval *kv = (keyval *) entry->data;
+            char *key = kv->key;
+            assert(key);
+            if (deepcopy) {
+                key = strdup(key);
+                if (key == NULL) {
+                    key = kv->key;
+                }
+            }
+            /* Caller has to make sure not to free the hashtable till
+             * this list is being accessed as the pointers in the keylist
+             * are pointing to the same objects which are in the table.
+             */
+            spell_list_add_head(&keylist_head, key);
+            assert(keylist_head->data);
+            entry = entry->next;
+        }
+    }
+    return keylist_head;
+}
+
+/*
+ * Returns a list of all the values stored in the table.
+ * The caller needs to make sure not to free the table till
+ * the table is being accessed as all the pointers in the list are
+ * same as the ones stored in the table and will be invalidated
+ * as soon as the table is freed. When freeing the list pass NULL
+ * as the 2nd parameter to the spell_list_free function.
+ */
+spell_list_node *
+spell_hashtable_get_values(spell_hashtable *table, bool deepcopy, void *(*copyval) (void *))
+{
+    if (table == NULL) {
+        return NULL;
+    }
+
+    int i;
+    spell_list_node *valuelist_head = NULL;
+    for (i = 0; i < table->size ; i++) {
+        spell_list_node *entry = table->array[i];
+        if (entry == NULL) {
+            continue;
+        }
+        while (entry) {
+            if (!entry->data) {
+                entry = entry->next;
+                continue;
+            }
+            keyval *kv = (keyval *) entry->data;
+            void *data = kv->val;
+            if (deepcopy) {
+                data = copyval(data);
+            }
+            spell_list_add_head(&valuelist_head, data);
+            entry = entry->next;
+        }
+    }
+    return valuelist_head;
+}
+
+static keyval *
+clone_keyval(keyval *kv, void *(*copyval) (void *))
+{
+    keyval *cloned_kv = malloc(sizeof(keyval));
+    if (cloned_kv == NULL) {
+        return NULL;
+    }
+
+    cloned_kv->key = strdup(kv->key);
+    if (cloned_kv->key == NULL) {
+        free(cloned_kv);
+        return NULL;
+    }
+
+    void *data = copyval(kv->val);
+    if (data == NULL) { 
+        free(cloned_kv->key);
+        free(cloned_kv);
+        return NULL;
+    }
+    return cloned_kv;
+}
+
+
+/*
+ * Returns a list of all the key value pairs stored in the table.
+ * The data field of the list entries is a keyval struct, where
+ * the key field contains the key and the val key contains the value
+ * object.
+ * The caller needs to make sure not to free the table till
+ * the table is being accessed as all the pointers in the list are
+ * same as the ones stored in the table and will be invalidated
+ * as soon as the table is freed. When freeing the list pass NULL
+ * as the 2nd parameter to the spell_list_free function.
+ */
+spell_list_node *
+spell_hashtable_get_key_values(spell_hashtable *table, bool deepcopy, void *(*copyval) (void *))
+{
+    if (table == NULL) {
+        return NULL;
+    }
+
+    int i;
+    spell_list_node *keyvaluelist_head = NULL;
+    for (i = 0; i < table->size ; i++) {
+        spell_list_node *entry = table->array[i];
+        if (entry == NULL) {
+            continue;
+        }
+        while (entry) {
+            if (!entry->data) {
+                entry = entry->next;
+                continue;
+            }
+            keyval *kv = (keyval *) entry->data;
+            if (deepcopy && copyval) {
+                kv = clone_keyval((keyval *) entry->data, copyval);
+                if (kv == NULL)
+                    kv = (keyval *) entry->data;
+            }
+            spell_list_add_head(&keyvaluelist_head, kv);
+            entry = entry->next;
+        }
+    }
+    return keyvaluelist_head;
 }

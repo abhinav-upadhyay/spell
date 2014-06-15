@@ -2,8 +2,9 @@
 #define SPELLUTIL_H
 
 #include <sys/types.h>
+#include <stdbool.h>
 
-#define SPELL_HASHTABLE_INIT_SIZE 32
+#define SPELL_HASHTABLE_INIT_SIZE 3
 
 typedef struct spell_list_node {
     struct spell_list_node *next;
@@ -23,7 +24,7 @@ typedef struct keyval {
 } keyval;
 
 spell_list_node *spell_list_init(void *);
-int spell_list_add(spell_list_node **, void *);
+int spell_list_add_head(spell_list_node **, void *);
 void spell_list_remove(spell_list_node **, spell_list_node *, void (*) (void *));
 void spell_list_free(spell_list_node **, void (*) (void *));
 spell_list_node *spell_list_get_tail(spell_list_node *);
@@ -33,5 +34,8 @@ void spell_hashtable_add(spell_hashtable *, char *, void *);
 void spell_hashtable_remove(spell_hashtable *, char *, void (*)(void *));
 void *spell_hashtable_get(spell_hashtable *, char *);
 void spell_hashtable_free(spell_hashtable *, void (*) (void *));
+spell_list_node *spell_hashtable_get_keys(spell_hashtable *, bool);
+spell_list_node *spell_hashtable_get_values(spell_hashtable *, bool, void *(*) (void *));
+spell_list_node *spell_hashtable_get_key_values(spell_hashtable *, bool,  void*(*) (void *));
 
 #endif
