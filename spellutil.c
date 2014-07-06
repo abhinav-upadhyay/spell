@@ -220,6 +220,19 @@ spell_hashtable_add(spell_hashtable *table, char *key, void *val)
     if (table->array[index] == NULL) {
         table->array[index] = spell_list_init(kv);
     } else {
+         spell_list_node *node = table->array[index];
+         while (node != NULL) {
+             keyval *data = (keyval *) node->data;
+             if (data == NULL) {
+                 node = node->next;
+                 continue;
+             }
+             if (strcmp(data->key, key) == 0) {
+                 data->val = val;
+                 break;
+             }
+             node = node->next;
+         }
          spell_list_add_head(&table->array[index], kv);
     }
     table->nfree--;

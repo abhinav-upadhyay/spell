@@ -52,6 +52,23 @@ test_spell_hash_add_multi()
 
 }
 
+static void
+test_spell_hash_update()
+{
+    char *key1 = "hello world";
+    int val1 = 1;
+    int val2 = 2;
+
+    spell_hashtable *table = spell_hashtable_init(32);
+    spell_hashtable_add(table, key1, &val1);
+    assert(*(int *) spell_hashtable_get(table, key1) == val1);
+    spell_hashtable_add(table, key1, &val2);
+    assert(*(int *) spell_hashtable_get(table, key1) == val2);
+    spell_hashtable_free(table, NULL);
+    printf("[PASSED] test_spell_hash_update\n");
+
+}
+
 static int
 count_digits(int x, int ndigits)
 {
@@ -146,4 +163,5 @@ main(int argc, char **argv)
     test_spell_hash_add_multi();
     test_spell_hash_resize();
     test_spell_hash_get_keys();
+    test_spell_hash_update();
 }
