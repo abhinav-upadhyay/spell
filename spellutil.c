@@ -214,13 +214,15 @@ spell_hashtable_add(spell_hashtable *table, char *key, void *val)
     unsigned long index = compute_hash((unsigned char *) key, table->size);
     keyval *kv = generate_new_keyval(key, val);
     if (kv == NULL) {
+        warnx("Failed to generate a new key value pair for key: %s", key);
         return;
     }
 
-    if (table->array[index] == NULL) {
+    spell_list_node *entry_list = table->array[index];
+    if (entry_list == NULL) {
         table->array[index] = spell_list_init(kv);
     } else {
-         spell_list_node *node = table->array[index];
+         spell_list_node *node = entry_list;
          while (node != NULL) {
              keyval *data = (keyval *) node->data;
              if (data == NULL) {
@@ -229,7 +231,9 @@ spell_hashtable_add(spell_hashtable *table, char *key, void *val)
              }
              if (strcmp(data->key, key) == 0) {
                  data->val = val;
-                 break;
+                 free(kv->key);
+                 free(kv);
+                 return;
              }
              node = node->next;
          }
@@ -324,30 +328,28 @@ free_keyval(void *d)
 }
 
 static void
-free_entry_list(spell_list_node **phead, void(*valfree) (void *))
+free_entry_list(spell_list_node *head, void(*valfree) (void *))
 {
 
     spell_list_node *n;
-    spell_list_node *head;
     spell_list_node *next;
 
-    if (!phead || !*phead) {
+    if (!head) {
         return;
     }
 
-    head = *phead;
     n = head;
     while (n) {
         next = n->next;
         keyval *kv = (keyval *) n->data;
         free(kv->key);
-        if (valfree)
+        if (valfree) {
             valfree(kv->val);
+        }
         free(kv);
         free(n);
         n = next;
     }
-    *phead = NULL;
 }
 
 void
@@ -362,7 +364,7 @@ spell_hashtable_free(spell_hashtable *table, void (*pfree) (void *))
         if (entry == NULL) {
             continue;
         }
-        free_entry_list(&entry, pfree);
+        free_entry_list(entry, pfree);
     }
     free(table->array);
     free(table);
