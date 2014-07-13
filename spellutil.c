@@ -518,3 +518,58 @@ spell_hashtable_get_key_values(spell_hashtable *table, bool deepcopy, void *(*co
     }
     return keyvaluelist_head;
 }
+
+/**
+ * Dump the content of the hashtable into a file in a new line separated format where each
+ * line contains one key value pair.
+ * The function requires a pointer to a function which can return a string representation of the
+ * value object stored in the hashtable. 
+ * The function also assumes that all the values stored in the table are of same type and the same
+ * function can be used to get the string representation in order to write to the file. In case this
+ * assumption does not hold true, do not use this function.
+ */
+void
+spell_hashtable_dump(spell_hashtable *table, const char *filename, char *(*print) (void *))
+{
+    if (table == NULL) {
+        return;
+    }
+
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        warn("Failed to open file %s for writing.", filename);
+        return;
+    }
+
+    spell_list_node *keyvaluelist_head = NULL;
+    for (int i = 0; i < table->size ; i++) {
+        spell_list_node *entry = table->array[i];
+        if (entry == NULL) {
+            continue;
+        }
+        while (entry) {
+            if (!entry->data) {
+                entry = entry->next;
+                continue;
+            }
+            keyval *kv = (keyval *) entry->data;
+            spell_list_add_head(&keyvaluelist_head, kv);
+            entry = entry->next;
+        }
+    }
+
+    spell_list_node *node = keyvaluelist_head;
+    while (node != NULL) {
+        keyval *kv = node->data;
+        if (kv == NULL) {
+            node = node->next;
+            continue;
+        }
+        char *val = print(kv->val);
+        fprintf(file, "%s %s\n", kv->key, val);
+        free(val);
+        node = node->next;
+    }
+    fclose(file);
+    spell_list_free(&keyvaluelist_head, NULL);
+}

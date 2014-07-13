@@ -37,5 +37,5 @@ void spell_hashtable_free(spell_hashtable *, void (*) (void *));
 spell_list_node *spell_hashtable_get_keys(spell_hashtable *, bool);
 spell_list_node *spell_hashtable_get_values(spell_hashtable *, bool, void *(*) (void *));
 spell_list_node *spell_hashtable_get_key_values(spell_hashtable *, bool,  void*(*) (void *));
-
+void spell_hashtable_dump(spell_hashtable *, const char *, char *(*print) (void *));
 #endif

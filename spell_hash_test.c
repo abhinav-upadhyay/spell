@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -5,6 +6,7 @@
 #include <string.h>
 
 #include "spellutil.h"
+
 
 static void
 test_spell_hash_init()
@@ -153,6 +155,24 @@ test_spell_hash_get_keys()
     printf("[PASSED] test_spell_hash_get_keys\n");
 }
 
+static char *
+print_int(void *data)
+{
+    char *s;
+    int i = *(int *) data;
+    asprintf(&s, "%d", i);
+    return s;
+}
+
+static void
+test_spell_hash_dump()
+{
+    const int SIZE = 65;
+    spell_hashtable *table = generate_hashtable(SIZE);
+    spell_hashtable_dump(table, "table.dump", print_int);
+    spell_hashtable_free(table, NULL);
+}
+
 
 
 int
@@ -164,4 +184,5 @@ main(int argc, char **argv)
     test_spell_hash_resize();
     test_spell_hash_get_keys();
     test_spell_hash_update();
+    test_spell_hash_dump();
 }
