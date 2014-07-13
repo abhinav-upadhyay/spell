@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "spellutil.h"
-#include "dictionary.h"
 
 typedef struct word_count {
     int value;
