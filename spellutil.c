@@ -376,8 +376,8 @@ spell_hashtable_free(spell_hashtable *table, void (*pfree) (void *))
  * as soon as the table is freed. When freeing the list pass NULL
  * as the 2nd parameter to the spell_list_free function.
  */
-spell_list_node *
-spell_hashtable_get_keys(spell_hashtable *table, bool deepcopy)
+static spell_list_node *
+spell_hashtable_get_keys(spell_hashtable *table)
 {
     if (table == NULL) {
         return NULL;
@@ -395,12 +395,6 @@ spell_hashtable_get_keys(spell_hashtable *table, bool deepcopy)
             keyval *kv = (keyval *) entry->data;
             char *key = kv->key;
             assert(key);
-            if (deepcopy) {
-                key = strdup(key);
-                if (key == NULL) {
-                    key = kv->key;
-                }
-            }
             /* Caller has to make sure not to free the hashtable till
              * this list is being accessed as the pointers in the keylist
              * are pointing to the same objects which are in the table.
@@ -421,8 +415,8 @@ spell_hashtable_get_keys(spell_hashtable *table, bool deepcopy)
  * as soon as the table is freed. When freeing the list pass NULL
  * as the 2nd parameter to the spell_list_free function.
  */
-spell_list_node *
-spell_hashtable_get_values(spell_hashtable *table, bool deepcopy, void *(*copyval) (void *))
+static spell_list_node *
+spell_hashtable_get_values(spell_hashtable *table)
 {
     if (table == NULL) {
         return NULL;
@@ -442,39 +436,12 @@ spell_hashtable_get_values(spell_hashtable *table, bool deepcopy, void *(*copyva
             }
             keyval *kv = (keyval *) entry->data;
             void *data = kv->val;
-            if (deepcopy) {
-                data = copyval(data);
-            }
             spell_list_add_head(&valuelist_head, data);
             entry = entry->next;
         }
     }
     return valuelist_head;
 }
-
-static keyval *
-clone_keyval(keyval *kv, void *(*copyval) (void *))
-{
-    keyval *cloned_kv = malloc(sizeof(keyval));
-    if (cloned_kv == NULL) {
-        return NULL;
-    }
-
-    cloned_kv->key = strdup(kv->key);
-    if (cloned_kv->key == NULL) {
-        free(cloned_kv);
-        return NULL;
-    }
-
-    void *data = copyval(kv->val);
-    if (data == NULL) { 
-        free(cloned_kv->key);
-        free(cloned_kv);
-        return NULL;
-    }
-    return cloned_kv;
-}
-
 
 /*
  * Returns a list of all the key value pairs stored in the table.
@@ -487,8 +454,8 @@ clone_keyval(keyval *kv, void *(*copyval) (void *))
  * as soon as the table is freed. When freeing the list pass NULL
  * as the 2nd parameter to the spell_list_free function.
  */
-spell_list_node *
-spell_hashtable_get_key_values(spell_hashtable *table, bool deepcopy, void *(*copyval) (void *))
+static spell_list_node *
+spell_hashtable_get_key_values(spell_hashtable *table) 
 {
     if (table == NULL) {
         return NULL;
@@ -507,11 +474,6 @@ spell_hashtable_get_key_values(spell_hashtable *table, bool deepcopy, void *(*co
                 continue;
             }
             keyval *kv = (keyval *) entry->data;
-            if (deepcopy && copyval) {
-                kv = clone_keyval((keyval *) entry->data, copyval);
-                if (kv == NULL)
-                    kv = (keyval *) entry->data;
-            }
             spell_list_add_head(&keyvaluelist_head, kv);
             entry = entry->next;
         }

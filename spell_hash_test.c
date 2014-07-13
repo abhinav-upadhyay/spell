@@ -7,6 +7,10 @@
 
 #include "spellutil.h"
 
+typedef struct int_struct {
+    int i;
+} int_struct;
+
 
 static void
 test_spell_hash_init()
@@ -121,46 +125,24 @@ static spell_hashtable *
 generate_hashtable(int limit)
 {
     int i;
+    int_struct *s;
     spell_hashtable *table = spell_hashtable_init(limit);
     for (i = 0; i < limit; i++) {
         char *k = itos(i);
-        spell_hashtable_add(table, k, &i);
+        s = malloc(sizeof(int_struct));
+        s->i = i;
+        spell_hashtable_add(table, k, (void *)s);
         free(k);
     }
     return table;
 }
 
-static void
-test_spell_hash_get_keys()
-{
-    int i;
-    const int SIZE = 65;
-    int arr[65] = {0};
-    spell_hashtable *table = generate_hashtable(SIZE);
-    spell_list_node *keylist = spell_hashtable_get_keys(table, false);
-    assert(keylist != NULL);
-    spell_list_node *thead = keylist;
-    while (thead) {
-        char *key = (char *) thead->data;
-        int intkey = atoi(key);
-        assert(arr[intkey] == 0);
-        arr[intkey] = intkey;
-        thead = thead->next;
-    }
-    for (i = 0; i < SIZE; i++) {
-        assert(arr[i] == i);
-    }
-    spell_hashtable_free(table, NULL);
-    spell_list_free(&keylist, NULL);
-    printf("[PASSED] test_spell_hash_get_keys\n");
-}
-
 static char *
-print_int(void *data)
+print_struct_int(void *data)
 {
     char *s;
-    int i = *(int *) data;
-    asprintf(&s, "%d", i);
+    int_struct *d  = (int_struct *) data;
+    asprintf(&s, "%d", d->i);
     return s;
 }
 
@@ -169,8 +151,8 @@ test_spell_hash_dump()
 {
     const int SIZE = 65;
     spell_hashtable *table = generate_hashtable(SIZE);
-    spell_hashtable_dump(table, "table.dump", print_int);
-    spell_hashtable_free(table, NULL);
+    spell_hashtable_dump(table, "table.dump", print_struct_int);
+    spell_hashtable_free(table, free);
 }
 
 
@@ -182,7 +164,6 @@ main(int argc, char **argv)
     test_spell_hash_add_one();
     test_spell_hash_add_multi();
     test_spell_hash_resize();
-    test_spell_hash_get_keys();
     test_spell_hash_update();
     test_spell_hash_dump();
 }
