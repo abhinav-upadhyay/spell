@@ -503,21 +503,11 @@ spell_hashtable_dump(spell_hashtable *table, const char *filename, char *(*print
         return;
     }
 
-    spell_list_node *keyvaluelist_head = NULL;
-    for (int i = 0; i < table->size ; i++) {
-        spell_list_node *entry = table->array[i];
-        if (entry == NULL) {
-            continue;
-        }
-        while (entry) {
-            if (!entry->data) {
-                entry = entry->next;
-                continue;
-            }
-            keyval *kv = (keyval *) entry->data;
-            spell_list_add_head(&keyvaluelist_head, kv);
-            entry = entry->next;
-        }
+    spell_list_node *keyvaluelist_head = spell_hashtable_get_key_values(table);
+    if (keyvaluelist_head == NULL) {
+        fclose(file);
+        warnx("Failed to read all the key value pairs from the table.");
+        return;
     }
 
     spell_list_node *node = keyvaluelist_head;
