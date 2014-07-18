@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "spellutil.h"
 
@@ -78,6 +79,30 @@ test_list_get_tail()
     printf("[PASSED] test_list_get_tail\n");
 }
 
+static int
+node_compare(const void *d1, const void *d2)
+{
+    const char *s1 = (const char *) d1;
+    const char *s2 = (const char *) d2;
+    return strcmp(s1, s2);
+}
+
+static void
+test_list_get_middle()
+{
+    spell_list_node *n = NULL;
+    char *a = "a";
+    char *b = "b";
+    char *c = "c";
+    spell_list_add_head(&n, a);
+    spell_list_add_head(&n, b);
+    spell_list_add_head(&n, c);
+    spell_list_node *mid_node = spell_list_get(n, "a", node_compare);
+    assert(mid_node != NULL);
+    spell_list_free(&n, NULL);
+    printf("[PASSED] test_list_get_middle\n");
+}
+
 static void
 test_list_remove_tail()
 {
@@ -138,6 +163,7 @@ int main
     test_list_add_one();
     test_list_free_one();
     test_list_get_tail();
+    test_list_get_middle();
     test_list_remove_head();
     test_list_remove_tail();
     test_list_remove_middle();

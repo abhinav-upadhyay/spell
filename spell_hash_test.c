@@ -44,7 +44,7 @@ test_spell_hash_add_multi()
     char *val1 = "foo bar";
     char *key2 = "a";
     char *val2 = "b";
-    char *key3 = "c";
+    char *key3 = "b ";
     char *val3 = "d";
     spell_hashtable *table = spell_hashtable_init(1);
     spell_hashtable_add(table, key1, val1);
@@ -57,6 +57,31 @@ test_spell_hash_add_multi()
     printf("[PASSED] test_spell_hash_add_multi\n");
 
 }
+
+static void
+test_spell_hash_get()
+{
+    char *key1 = "hello world";
+    char *val1 = "foo bar";
+    char *key2 = "a";
+    char *val2 = "b";
+    char *key3 = "c";
+    char *val3 = "d";
+    spell_hashtable *table = spell_hashtable_init(1);
+    spell_hashtable_add(table, key1, val1);
+    spell_hashtable_add(table, key2, val2);
+    spell_hashtable_add(table, key3, val3);
+    char *getval1 = spell_hashtable_get(table, key1);
+    char *getval2 = spell_hashtable_get(table, key2);
+    char *getval3 = spell_hashtable_get(table, key3);
+    assert(strcmp(getval1, val1) == 0);
+    assert(strcmp(getval2, val2) == 0);
+    assert(strcmp(getval3, val3) == 0);
+    spell_hashtable_free(table, NULL);
+    printf("[PASSED] test_spell_hash_get\n");
+
+}
+
 
 static void
 test_spell_hash_update()
@@ -163,6 +188,7 @@ main(int argc, char **argv)
     test_spell_hash_init();
     test_spell_hash_add_one();
     test_spell_hash_add_multi();
+    test_spell_hash_get();
     test_spell_hash_resize();
     test_spell_hash_update();
     test_spell_hash_dump();
