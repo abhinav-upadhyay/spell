@@ -104,16 +104,9 @@ spell_list_node *
 spell_list_get(spell_list_node *head, void *data, int (*compare) (const void*, const void*))
 {
     spell_list_node *iter = head;
-    if (head == NULL) {
-        return NULL;
-    }
     
-    if (!compare(head->data, data)) {
-        return head;
-    }
-
-    while (iter->next) {
-        if (!compare(iter->data, data)) {
+    while (iter) {
+        if (compare(iter->data, data) == 0) {
             return iter;
         }
         iter = iter->next;
@@ -200,10 +193,18 @@ resize_table(spell_hashtable *table)
     table->size *= 2;
 }
 
+static int
+hash_compare_data(const void *d1, const void *d2)
+{
+    const keyval *kv1 = (const keyval *)d1;
+    const keyval *kv2 = (const keyval *)d2;
+    return strcmp(kv1->key, kv2->key);
+}
+
 void
 spell_hashtable_add(spell_hashtable *table, char *key, void *val)
 {
-    if (key == NULL) {
+    if (key == NULL || table == NULL) {
         return;
     }
 
@@ -212,75 +213,68 @@ spell_hashtable_add(spell_hashtable *table, char *key, void *val)
     }
 
     unsigned long index = compute_hash((unsigned char *) key, table->size);
+
+    spell_list_node *entry_list = table->array[index];
+    if (entry_list == NULL) {
+        keyval *kv = generate_new_keyval(key, val);
+        if (kv == NULL) {
+            warnx("Failed to generate a new key value pair for key: %s", key);
+            return;
+        }
+        table->array[index] = spell_list_init(kv);
+        table->nfree--;
+        return;
+    } 
+
+    spell_list_node *node = entry_list;
+    keyval *dummy_kv = generate_new_keyval(key, NULL);
+    spell_list_node *existing_key = spell_list_get(entry_list, dummy_kv, hash_compare_data);
+    free(dummy_kv->key);
+    free(dummy_kv);
+    if (existing_key != NULL) {
+        keyval *data = (keyval *) node->data;
+        data->val = val;
+        return;
+    }
+
     keyval *kv = generate_new_keyval(key, val);
     if (kv == NULL) {
         warnx("Failed to generate a new key value pair for key: %s", key);
         return;
     }
-
-    spell_list_node *entry_list = table->array[index];
-    if (entry_list == NULL) {
-        table->array[index] = spell_list_init(kv);
-    } else {
-         spell_list_node *node = entry_list;
-         while (node != NULL) {
-             keyval *data = (keyval *) node->data;
-             if (data == NULL) {
-                 node = node->next;
-                 continue;
-             }
-             if (strcmp(data->key, key) == 0) {
-                 data->val = val;
-                 free(kv->key);
-                 free(kv);
-                 return;
-             }
-             node = node->next;
-         }
-         spell_list_add_head(&table->array[index], kv);
-    }
+    spell_list_add_head(&table->array[index], kv);
     table->nfree--;
 }
 
-static int
-hash_compare_data(const void *d1, const void *d2)
-{
-    const keyval *kv1 = (const keyval *)d1;
-    const keyval *kv2 = (const keyval *)d2;
-    if (strcmp(kv1->key, kv2->key) == 0) {
-        return 0;
-    }
-    return 1;
-}
 
 void *
 spell_hashtable_get(spell_hashtable *table, char *key)
 {
     spell_list_node *n;
     keyval *dummy_kv;
-    keyval *val;
+    keyval *kv;
     unsigned long index = compute_hash((unsigned char *)key, table->size);
-    if (table->array[index] == NULL) {
+    spell_list_node *entry = table->array[index];
+    if (entry == NULL) {
         return NULL;
     }
 
-    spell_list_node *entry = table->array[index];
     dummy_kv = malloc(sizeof(keyval));
     if (dummy_kv == NULL) {
         return NULL;
     }
+
     dummy_kv->key = key;
     n = spell_list_get(entry, dummy_kv, hash_compare_data);  
+    free(dummy_kv);
     if (n == NULL) {
-        free(dummy_kv);
         return NULL;
     }
-    val = n->data;
-    if (val != NULL) {
-        free(dummy_kv);
-        return val->val;
+    kv = (keyval *) n->data;
+    if (kv != NULL) {
+        assert(strcmp(kv->key, key) == 0);
+        return kv->val;
     }
-    free(dummy_kv);
     return NULL;
 }
 
@@ -333,10 +327,6 @@ free_entry_list(spell_list_node *head, void(*valfree) (void *))
 
     spell_list_node *n;
     spell_list_node *next;
-
-    if (!head) {
-        return;
-    }
 
     n = head;
     while (n) {
