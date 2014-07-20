@@ -1,4 +1,5 @@
 #define _GNU_SOURCE
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -23,8 +24,45 @@ print_count(void *data)
 static void
 free_count(void *data)
 {
-    count *c = (count *) data;
-    free(c);
+    free(data);
+}
+
+static void
+to_lower(char *s)
+{
+    char c;
+    char *t = s;
+    for (int i = 0; i < strlen(s); i++) {
+        c = s[i];
+        s[i] = tolower(c);
+    }
+}
+
+static char *
+sanitize_string(char *s)
+{
+    char *ret = malloc(strlen(s) + 1);
+    int i = 0;
+    while(*s) {
+        if (*s == ' ' || *s == '\t' || *s == '"' || *s == '\'' || *s == '\n' || *s == ',' || *s == '.' || *s == ';' || *s == ':') {
+            s++;
+            continue;
+        }
+        ret[i++] = *s++;
+    }
+    ret[i] = 0;
+    return ret;
+}
+
+static int
+is_valid(char *word)
+{
+    if (!strcmp(word, " ") ||
+            !strcmp(word, "\n") ||
+            !strcmp(word, "\t")) {
+        return 1;
+    }
+    return 0;
 }
 
 int
@@ -48,15 +86,22 @@ parse_file(const char *filename, spell_hashtable *table)
         // TODO Use a more sophisitcated tokenization,
         // perhaps preprocess with a stemmer algorithm first
         word[read - 1] = 0;
-        c = (count *) spell_hashtable_get(table, word);
+        to_lower(word);
+        char *sanitized_word = sanitize_string(word);
+        if (sanitized_word == NULL || strlen(sanitized_word) == 0) {
+            free(sanitized_word);
+            continue;
+        }
+        c = (count *) spell_hashtable_get(table, sanitized_word);
         if (c == NULL) {
             default_count = malloc(sizeof(count));
             default_count->value = 1;
-            spell_hashtable_add(table, word, default_count);
+            spell_hashtable_add(table, sanitized_word, default_count);
         } else {
             c->value++;
-            spell_hashtable_add(table, word, c);
+//            spell_hashtable_add(table, sanitized_word, c);
         }
+        free(sanitized_word);
     }
     free(word);
     fclose(file);
@@ -66,7 +111,7 @@ parse_file(const char *filename, spell_hashtable *table)
 int
 main(int argc, char **argv)
 {
-    spell_hashtable *table = spell_hashtable_init(10);
+    spell_hashtable *table = spell_hashtable_init(1024);
     if (table == NULL) {
         errx(EXIT_FAILURE, "Failed to initialize the hash table");
     }
