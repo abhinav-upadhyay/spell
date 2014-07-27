@@ -96,11 +96,11 @@ parse_file(const char *filename, spell_hashtable *table)
             wordlen = strcspn(templine, " ,-:");
             templine[wordlen] = 0;
             word = templine;
+            templine += wordlen + 1;
             to_lower(word);
             char *sanitized_word = sanitize_string(word);
             if (sanitized_word == NULL || strlen(sanitized_word) == 0) {
                 free(sanitized_word);
-                templine += wordlen + 1;
                 continue;
             }
             c = (count *) spell_hashtable_get(table, sanitized_word);
@@ -112,7 +112,6 @@ parse_file(const char *filename, spell_hashtable *table)
                 c->value++;
             }
             free(sanitized_word);
-            templine += wordlen + 1;
         }
     }
     free(line);
