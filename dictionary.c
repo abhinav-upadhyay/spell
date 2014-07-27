@@ -99,7 +99,6 @@ parse_file(const char *filename, spell_hashtable *table)
             spell_hashtable_add(table, sanitized_word, default_count);
         } else {
             c->value++;
-//            spell_hashtable_add(table, sanitized_word, c);
         }
         free(sanitized_word);
     }
