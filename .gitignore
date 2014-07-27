@@ -5,4 +5,5 @@
 *.dump
 spell_list_test
 spell_hash_test
+dictionary
 core
