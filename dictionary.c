@@ -93,7 +93,7 @@ parse_file(const char *filename, spell_hashtable *table)
         line[read - 1] = 0;
         templine = line;
         while (*templine) {
-            wordlen = strcspn(templine, " ");
+            wordlen = strcspn(templine, " ,-:");
             templine[wordlen] = 0;
             word = templine;
             to_lower(word);
