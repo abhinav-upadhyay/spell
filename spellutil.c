@@ -178,19 +178,67 @@ generate_new_keyval(char *key, void *val)
 }
 
 static void
+free_entry_list(spell_list_node *head, void(*valfree) (void *))
+{
+
+    spell_list_node *n;
+    spell_list_node *next;
+
+    n = head;
+    while (n) {
+        next = n->next;
+        keyval *kv = (keyval *) n->data;
+        free(kv->key);
+        if (valfree) {
+            valfree(kv->val);
+        }
+        free(kv);
+        free(n);
+        n = next;
+    }
+}
+
+static void
+free_table_array(spell_list_node **array, size_t size, void (*pfree) (void *))
+{
+
+    for (int i = 0; i < size ; i++) {
+        spell_list_node *entry = array[i];
+        if (entry == NULL) {
+            continue;
+        }
+        free_entry_list(entry, pfree);
+    }
+    free(array);
+}
+
+static void
 resize_table(spell_hashtable *table)
 {
     int i;
-    spell_list_node **ptr = realloc(table->array, 2 * table->size * sizeof(spell_list_node *));
+    size_t newsize = 2 * table->size;
+    size_t oldsize = table->size;
+    spell_list_node **ptr = malloc(newsize * sizeof(spell_list_node *));
     if (ptr == NULL) {
         return;
     }
+    spell_list_node **old_array = table->array;
     table->array =  ptr;
-    for (i = table->size; i < 2 * table->size; i++) {
+    table->size = newsize;
+    table->nfree = newsize;
+    for (i = 0; i < newsize; i++) {
         table->array[i] = NULL;
     }
-    table->nfree = table->size;
-    table->size *= 2;
+
+    for (i = 0; i < oldsize; i++) {
+        spell_list_node *n = old_array[i];
+        while(n) {
+            keyval *kv = (keyval *) n->data;
+            spell_hashtable_add(table, kv->key, kv->val);
+            n = n->next;
+        }
+    }
+    free_table_array(old_array, oldsize, NULL);
 }
 
 static int
@@ -321,26 +369,6 @@ free_keyval(void *d)
     free(kv->key);
 }
 
-static void
-free_entry_list(spell_list_node *head, void(*valfree) (void *))
-{
-
-    spell_list_node *n;
-    spell_list_node *next;
-
-    n = head;
-    while (n) {
-        next = n->next;
-        keyval *kv = (keyval *) n->data;
-        free(kv->key);
-        if (valfree) {
-            valfree(kv->val);
-        }
-        free(kv);
-        free(n);
-        n = next;
-    }
-}
 
 void
 spell_hashtable_free(spell_hashtable *table, void (*pfree) (void *))
@@ -348,15 +376,7 @@ spell_hashtable_free(spell_hashtable *table, void (*pfree) (void *))
     if (table == NULL) {
         return;
     }
-    int i;
-    for (i = 0; i < table->size ; i++) {
-        spell_list_node *entry = table->array[i];
-        if (entry == NULL) {
-            continue;
-        }
-        free_entry_list(entry, pfree);
-    }
-    free(table->array);
+    free_table_array(table->array, table->size, pfree);
     free(table);
 }
 
