@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +12,13 @@
 typedef struct word_count {
     int value;
 } count;
+
+static void
+usage(void)
+{
+    fprintf(stderr, "Usage: spell -i InputFile -O outputFile\n");
+    exit(1);
+}
 
 static char *
 print_count(void *data)
@@ -122,12 +130,35 @@ parse_file(const char *filename, spell_hashtable *table)
 int
 main(int argc, char **argv)
 {
+    char ch;
+    char *input_file;
+    char *output_file;
+
+    while ((ch = getopt(argc, argv, "i:o:")) != -1) {
+        switch (ch) {
+        case 'i':
+            input_file = optarg;
+            break;
+        case 'o':
+            output_file = optarg;
+            break;
+        case '?':
+        default:
+            usage();
+        }
+    }
+    argc -= optind;
+    argv += optind;
+    if (!argc) {
+        usage();
+    }
+
     spell_hashtable *table = spell_hashtable_init(1024);
     if (table == NULL) {
         errx(EXIT_FAILURE, "Failed to initialize the hash table");
     }
-    parse_file("file.txt", table);
-    spell_hashtable_dump(table, "dictionary.dump", print_count);
+    parse_file(input_file, table);
+    spell_hashtable_dump(table, output_file, print_count);
     spell_hashtable_free(table, free_count);
 
 }
