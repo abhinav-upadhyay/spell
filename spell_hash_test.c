@@ -140,7 +140,6 @@ test_spell_hash_resize()
     assert(table->nfree == 0);
     spell_hashtable_add(table, "33", "33");
     assert(table->size == 2 * SPELL_HASHTABLE_INIT_SIZE);
-    assert(table->nfree == SPELL_HASHTABLE_INIT_SIZE - 1);
     spell_hashtable_free(table, NULL);
     printf("[PASSED] test_spell_hash_resize\n");
 
