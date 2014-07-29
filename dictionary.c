@@ -16,7 +16,7 @@ typedef struct word_count {
 static void
 usage(void)
 {
-    fprintf(stderr, "Usage: spell -i InputFile -O outputFile\n");
+    fprintf(stderr, "Usage: spell -i InputFile -o outputFile\n");
     exit(1);
 }
 
@@ -131,8 +131,8 @@ int
 main(int argc, char **argv)
 {
     char ch;
-    char *input_file;
-    char *output_file;
+    char *input_file = NULL;
+    char *output_file = NULL;
 
     while ((ch = getopt(argc, argv, "i:o:")) != -1) {
         switch (ch) {
@@ -147,9 +147,8 @@ main(int argc, char **argv)
             usage();
         }
     }
-    argc -= optind;
-    argv += optind;
-    if (!argc) {
+
+    if (!input_file || !output_file) {
         usage();
     }
 
@@ -160,6 +159,4 @@ main(int argc, char **argv)
     parse_file(input_file, table);
     spell_hashtable_dump(table, output_file, print_count);
     spell_hashtable_free(table, free_count);
-
 }
-
