@@ -52,9 +52,7 @@ sanitize_string(char *s)
     char *ret = malloc(strlen(s) + 1);
     int i = 0;
     while(*s) {
-        if (*s == ' ' || *s == '\t' || *s == '"' || *s == '\'' ||
-                *s == ',' || *s == '.' || *s == ';' ||
-                *s == ':') {
+        if (!isalpha(*s)) {
             s++;
             continue;
         }
@@ -101,7 +99,7 @@ parse_file(const char *filename, spell_hashtable *table)
         line[read - 1] = 0;
         templine = line;
         while (*templine) {
-            wordlen = strcspn(templine, " ,-:");
+            wordlen = strcspn(templine, " ,-:\u2014");
             templine[wordlen] = 0;
             word = templine;
             templine += wordlen + 1;
