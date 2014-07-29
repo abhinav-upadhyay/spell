@@ -68,7 +68,6 @@ static char *
 sanitize_string(char *s)
 {
     size_t len = strlen(s);
-    char *ret = malloc(len + 1);
     int i = 0;
     if (s[0] == '(' && s[len - 1] == ')') {
         s[len - 1] = 0;
@@ -81,6 +80,8 @@ sanitize_string(char *s)
         return NULL;
     }
 
+    char *ret = malloc(len + 1);
+    memset(ret, 0, len + 1);
     while(*s) {
         /*
          * Detect apostrophe and stop copying characters immediately
@@ -150,7 +151,7 @@ parse_file(const char *filename, spell_hashtable *table)
         line[read - 1] = 0;
         templine = line;
         while (*templine) {
-            wordlen = strcspn(templine, " ,-:\u2014");
+            wordlen = strcspn(templine, " ,;-:\u2014");
             templine[wordlen] = 0;
             word = templine;
             templine += wordlen + 1;
