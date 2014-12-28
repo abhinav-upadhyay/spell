@@ -128,7 +128,6 @@ is_valid(char *word)
 int
 parse_file(const char *filename, spell_hashtable *table)
 {
-    FILE *file = fopen(filename, "r");
     int _errno;
     size_t len = 0;
     size_t wordlen;
@@ -138,6 +137,7 @@ parse_file(const char *filename, spell_hashtable *table)
     char *templine;
     count *c;
     count *default_count;
+    FILE *file = fopen(filename, "r");
 
     if (file == NULL) {
         _errno = errno;
