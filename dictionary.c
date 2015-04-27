@@ -16,7 +16,7 @@ typedef struct word_count {
 static void
 usage(void)
 {
-    fprintf(stderr, "Usage: spell -i InputFile -o outputFile\n");
+    fprintf(stderr, "Usage: dictionary -i InputFile -o outputFile\n");
     exit(1);
 }
 
@@ -71,9 +71,7 @@ sanitize_string(char *s)
     int i = 0;
     if (s[0] == '(' && s[len - 1] == ')') {
         s[len - 1] = 0;
-        if (is_upper(s + 1)) {
-            return NULL;
-        }
+        s++;
     }
 
     if (is_upper(s)) {
@@ -104,9 +102,10 @@ sanitize_string(char *s)
             return NULL;
         }
 
+        // Why bother with words which contain other characters or numerics?
         if (!isalpha(*s)) {
-            s++;
-            continue;
+            free(ret);
+            return NULL;
         }
         ret[i++] = *s++;
     }
@@ -151,7 +150,7 @@ parse_file(const char *filename, spell_hashtable *table)
         line[read - 1] = 0;
         templine = line;
         while (*templine) {
-            wordlen = strcspn(templine, " ,;-:\u2014");
+            wordlen = strcspn(templine, " \"\',;-:.\u2014");
             templine[wordlen] = 0;
             word = templine;
             templine += wordlen + 1;
@@ -164,6 +163,9 @@ parse_file(const char *filename, spell_hashtable *table)
                 continue;
             }
             to_lower(sanitized_word);
+            // See if this word is already in the table,
+            // if yes, then increment the count,
+            // otherwise add the word to the table.
             c = (count *) spell_hashtable_get(table, sanitized_word);
             if (c == NULL) {
                 default_count = malloc(sizeof(count));
