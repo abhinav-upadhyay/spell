@@ -81,7 +81,9 @@ spell_list_remove(spell_list_node **phead, spell_list_node *node, void (*pfree) 
     if (node == head) {
         *phead = head->next;
         if (pfree) {
-            pfree(head->data);
+            if (head->data) {
+                pfree(head->data);
+            }
         }
         free(head);
         return;
@@ -91,7 +93,9 @@ spell_list_remove(spell_list_node **phead, spell_list_node *node, void (*pfree) 
         if (iter->next == node) {
             iter->next = iter->next->next;
             if (pfree) {
-                pfree(node->data);
+                if (node->data) {
+                    pfree(node->data);
+                }
             }
             free(node);
             return;
@@ -104,7 +108,7 @@ spell_list_node *
 spell_list_get(spell_list_node *head, void *data, int (*compare) (const void*, const void*))
 {
     spell_list_node *iter = head;
-    
+
     while (iter) {
         if (compare(iter->data, data) == 0) {
             return iter;
@@ -301,6 +305,10 @@ spell_hashtable_get(spell_hashtable *table, char *key)
     spell_list_node *n;
     keyval *dummy_kv;
     keyval *kv;
+    if (!key) {
+        warnx("Trying to get value for NULL key from the table");
+        return NULL;
+    }
     unsigned long index = compute_hash((unsigned char *)key, table->size);
     spell_list_node *entry = table->array[index];
     if (entry == NULL) {
@@ -320,6 +328,7 @@ spell_hashtable_get(spell_hashtable *table, char *key)
     }
     kv = (keyval *) n->data;
     if (kv != NULL) {
+        assert(kv->key != NULL);
         assert(strcmp(kv->key, key) == 0);
         return kv->val;
     }
@@ -330,6 +339,12 @@ static void
 hash_free(void *keyval_pair)
 {
     keyval *kv = (keyval *) keyval_pair;
+    if (!kv) {
+        warnx("Trying to free a NULL key value pair");
+        return;
+    }
+
+    assert(kv->key != NULL);
     free(kv->key);
 }
 
@@ -357,8 +372,12 @@ spell_hashtable_remove(spell_hashtable *table, char *key, void (*pfree) (void *)
         return;
     }
     val = n->data;
-    pfree(val);
     spell_list_remove(&entry, n, hash_free);
+
+    pfree(val);
+    if (entry == NULL) {
+        table->array[index] = NULL;
+    }
     free(dummy_kv);
 }
 
@@ -466,7 +485,7 @@ spell_hashtable_get_values(spell_hashtable *table)
  * as soon as the table is freed. When freeing the list pass NULL
  * as the 2nd parameter to the spell_list_free function.
  */
-static spell_list_node *
+spell_list_node *
 spell_hashtable_get_key_values(spell_hashtable *table) 
 {
     if (table == NULL) {

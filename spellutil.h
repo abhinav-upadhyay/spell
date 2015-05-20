@@ -35,4 +35,5 @@ void spell_hashtable_remove(spell_hashtable *, char *, void (*)(void *));
 void *spell_hashtable_get(spell_hashtable *, char *);
 void spell_hashtable_free(spell_hashtable *, void (*) (void *));
 void spell_hashtable_dump(spell_hashtable *, const char *, char *(*print) (void *));
+spell_list_node * spell_hashtable_get_key_values(spell_hashtable *);
 #endif
