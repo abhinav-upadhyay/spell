@@ -11,6 +11,24 @@ typedef struct int_struct {
     int i;
 } int_struct;
 
+static void
+test_spell_hash_remove()
+{
+    char *key1 = "hello world";
+    char *val1 = "foo bar";
+    char *key2 = "a";
+    char *val2 = "b";
+    char *key3 = "b ";
+    char *val3 = "d";
+    spell_hashtable *table = spell_hashtable_init(1);
+    spell_hashtable_add(table, key2, val2);
+    spell_hashtable_add(table, key1, val1);
+    spell_hashtable_add(table, key3, val3);
+    spell_hashtable_remove(table, key2, free);
+    assert(spell_hashtable_get(table, key2) == NULL);
+    spell_hashtable_free(table, NULL);
+    printf("[PASSED] test_spell_hash_remove\n");
+}
 
 static void
 test_spell_hash_init()
@@ -191,4 +209,5 @@ main(int argc, char **argv)
     test_spell_hash_resize();
     test_spell_hash_update();
     test_spell_hash_dump();
+    test_spell_hash_remove();
 }
