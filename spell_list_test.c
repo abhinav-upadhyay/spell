@@ -127,6 +127,24 @@ test_list_remove_tail()
 }
 
 static void
+test_list_remove_one_element_list()
+{
+    int j = 20;
+    spell_list_node *tail;
+    spell_list_node *n = NULL;
+    spell_list_add_head(&n, &j);
+    tail = spell_list_get_tail(n);
+    assert(*(int *) tail->data == j);
+    spell_list_remove(&n, tail, NULL);
+    tail = spell_list_get_tail(n);
+    assert(tail== NULL);
+    assert(n == NULL);
+//    spell_list_free(&n, NULL);
+    printf("[PASSED] test_list_remove_one_element_list\n");
+
+}
+
+static void
 test_list_remove_middle()
 {
     spell_list_node *to_be_deleted;
@@ -167,4 +185,5 @@ int main
     test_list_remove_head();
     test_list_remove_tail();
     test_list_remove_middle();
+    test_list_remove_one_element_list();
 }
