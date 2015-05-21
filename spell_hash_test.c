@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "spellutil.h"
 
@@ -11,24 +12,6 @@ typedef struct int_struct {
     int i;
 } int_struct;
 
-static void
-test_spell_hash_remove()
-{
-    char *key1 = "hello world";
-    char *val1 = "foo bar";
-    char *key2 = "a";
-    char *val2 = "b";
-    char *key3 = "b ";
-    char *val3 = "d";
-    spell_hashtable *table = spell_hashtable_init(1);
-    spell_hashtable_add(table, key2, val2);
-    spell_hashtable_add(table, key1, val1);
-    spell_hashtable_add(table, key3, val3);
-    spell_hashtable_remove(table, key2, free);
-    assert(spell_hashtable_get(table, key2) == NULL);
-    spell_hashtable_free(table, NULL);
-    printf("[PASSED] test_spell_hash_remove\n");
-}
 
 static void
 test_spell_hash_init()
@@ -197,6 +180,23 @@ test_spell_hash_dump()
     spell_hashtable_free(table, free);
 }
 
+static void
+test_spell_hash_remove()
+{
+    spell_hashtable *table = generate_hashtable(1);
+    srand(time(NULL));
+    int r;
+    char *k;
+//    r = (rand() % 25) + 1;
+  //  k = itos(r);
+    //assert(k != NULL);
+    //assert(table != NULL);
+    spell_hashtable_remove(table, "0", free);
+    assert(spell_hashtable_get(table, "0") == NULL);
+    //free(k);
+    spell_hashtable_free(table, free);
+    printf("[PASSED] test_spell_hash_remove\n");
+}
 
 
 int
