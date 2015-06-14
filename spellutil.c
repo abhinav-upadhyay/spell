@@ -374,7 +374,8 @@ spell_hashtable_remove(spell_hashtable *table, char *key, void (*pfree) (void *)
     val = n->data;
     spell_list_remove(&entry, n, hash_free);
 
-    pfree(val);
+    pfree(val->val);
+    free(val);
     if (entry == NULL) {
         table->array[index] = NULL;
     }
